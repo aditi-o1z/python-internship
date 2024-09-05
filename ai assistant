@@ -1,0 +1,100 @@
+import speech_recognition as sr
+import pyttsx3
+import openai
+import datetime
+
+# Set your OpenAI API key
+openai.api_key = 'sk-0dwecdf4LjzDa-B1KVQHXRryPHkAQHsKnVGfeRsCSkT3BlbkFJui_lNPSasQDIiEHNhJIzXdjpQ4xgA'
+
+# Initialize the text-to-speech engine
+engine = pyttsx3.init()
+
+def speak(text):
+    """Converts text to speech."""
+    print(f"Speaking: {text}")  # Debug print statement
+    engine.say(text)
+    engine.runAndWait()
+
+def listen():
+    """Listens for voice input and converts it to text."""
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening...")
+        recognizer.adjust_for_ambient_noise(source)
+        audio = recognizer.listen(source)
+        try:
+            print("Recognizing...")
+            text = recognizer.recognize_google(audio)
+            print(f"You said: {text}")
+            return text.lower()
+        except sr.UnknownValueError:
+            print("Sorry, I didn't understand that.")  # Debug print statement
+            speak("Sorry, I didn't understand that.")
+            return ""
+        except sr.RequestError:
+            print("Sorry, there was a request error.")  # Debug print statement
+            speak("Sorry, there was a request error.")
+            return ""
+
+def get_current_time():
+    """Returns the current time."""
+    now = datetime.datetime.now()
+    return now.strftime("The current time is %I:%M %p")
+
+def get_current_date():
+    """Returns the current date."""
+    now = datetime.datetime.now()
+    return now.strftime("Today's date is %B %d, %Y")
+
+def get_general_knowledge(question):
+    """Uses OpenAI's API to answer general knowledge questions."""
+    try:
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=question,
+            max_tokens=100,
+            n=1,
+            stop=None,
+            temperature=0.5,
+        )
+        answer = response.choices[0].text.strip()
+        return answer
+    except Exception as e:
+        print(f"Error: {e}")  # Debug print statement
+        return f"Sorry, I couldn't fetch the answer: {str(e)}"
+
+def jarvis():
+    """Main function to run the JARVIS-like assistant."""
+    speak("Hello, how can I assist you today?")
+    while True:
+        command = listen()
+        print(f"Command received: {command}")  # Debug print statement
+
+        # Check for various greetings and status inquiries
+        if "time" in command:
+            time_info = get_current_time()
+            speak(time_info)
+
+        elif "date" in command:
+            date_info = get_current_date()
+            speak(date_info)
+
+        elif "what is" in command or "who is" in command or "tell me about" in command:
+            answer = get_general_knowledge(command)
+            speak(answer)
+
+        elif "how are you" in command or "how r u" in command or "how are you doing" in command:
+            speak("I'm just a computer program, but I'm here to help you!")
+
+        elif "happy" in command or "good" in command or "great" in command:
+            speak("I'm glad to hear you're feeling positive today!")
+
+        elif "exit" in command or "quit" in command or "goodbye" in command:
+            speak("Goodbye! Have a great day!")
+            break
+
+        else:
+            speak("I'm sorry, I didn't catch that. Can you please repeat?")
+
+if __name__ == "__main__":
+    jarvis()
